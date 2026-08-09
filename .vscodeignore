@@ -1,0 +1,12 @@
+node_modules/**
+.git/**
+.vscode/**
+src/**
+test/**
+*.log
+*.tgz
+.env
+.DS_Store
+coverage/**
+.vs/**
+**/*.map

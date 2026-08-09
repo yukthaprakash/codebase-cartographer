@@ -20,6 +20,7 @@ const MODEL = 'gpt-3.5-turbo';
 export async function summarizeWorkspaceFiles(
   rootPath: string,
   nodes: GraphNode[],
+  apiKey?: string,
 ): Promise<Record<string, string>> {
   const cache = await loadCache(rootPath);
   const summaries: Record<string, string> = {};
@@ -38,18 +39,26 @@ export async function summarizeWorkspaceFiles(
     }
   }
 
-  for (let index = 0; index < pending.length; index += BATCH_SIZE) {
-    const batch = pending.slice(index, index + BATCH_SIZE);
-    const batchSummaries = await requestSummaries(rootPath, batch);
+  // If no API key provided, skip live summarization and populate placeholders for uncached files.
+  if (!apiKey) {
+    for (const item of pending) {
+      const msg = cache[item.node.id]?.summary || 'No summary (API key not set).';
+      summaries[item.node.id] = msg;
+    }
+  } else {
+    for (let index = 0; index < pending.length; index += BATCH_SIZE) {
+      const batch = pending.slice(index, index + BATCH_SIZE);
+      const batchSummaries = await requestSummaries(rootPath, batch, apiKey);
 
-    for (const item of batch) {
-      const summary = batchSummaries[item.node.id] || 'No summary available.';
-      summaries[item.node.id] = summary;
-      cache[item.node.id] = {
-        hash: item.hash,
-        summary,
-        updatedAt: new Date().toISOString(),
-      };
+      for (const item of batch) {
+        const summary = batchSummaries[item.node.id] || 'No summary available.';
+        summaries[item.node.id] = summary;
+        cache[item.node.id] = {
+          hash: item.hash,
+          summary,
+          updatedAt: new Date().toISOString(),
+        };
+      }
     }
   }
 
@@ -76,19 +85,16 @@ function computeHash(content: string): string {
   return createHash('sha256').update(content).digest('hex');
 }
 
-function getClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is required to summarize files.');
-  }
+function getClient(apiKey: string): OpenAI {
   return new OpenAI({ apiKey });
 }
 
 async function requestSummaries(
   rootPath: string,
   batch: Array<{ node: GraphNode; content: string; hash: string }>,
+  apiKey: string,
 ): Promise<Record<string, string>> {
-  const client = getClient();
+  const client = getClient(apiKey);
   const formattedFiles = batch
     .map(
       (item) =>
@@ -102,28 +108,51 @@ ${formattedFiles}
 
 Respond only with JSON, for example:\n{\n  "/src/foo.ts": "A helper module for ...",\n  "/src/bar.ts": "Defines ..."\n}`;
 
-  const response = await client.chat.completions.create({
-    model: MODEL,
-    messages: [
-      {
-        role: 'system',
-        content: 'You summarize code files in one or two sentences.',
-      },
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-    temperature: 0.2,
-  });
+  // Retry with exponential backoff for transient failures (e.g. rate limits).
+  const maxAttempts = 3;
+  let attempt = 0;
+  let lastErr: any = null;
 
-  const text = response.choices?.[0]?.message?.content?.trim() ?? '';
-  try {
-    const parsed = JSON.parse(text) as Record<string, string>;
-    return parsed;
-  } catch {
-    return parseFallback(text, batch.map((item) => item.node.id));
+  while (attempt < maxAttempts) {
+    try {
+      const response = await client.chat.completions.create({
+        model: MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: 'You summarize code files in one or two sentences.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.2,
+      });
+
+      const text = response.choices?.[0]?.message?.content?.trim() ?? '';
+      try {
+        const parsed = JSON.parse(text) as Record<string, string>;
+        return parsed;
+      } catch {
+        return parseFallback(text, batch.map((item) => item.node.id));
+      }
+    } catch (err: any) {
+      lastErr = err;
+      attempt += 1;
+      // If rate limited, wait a bit and retry
+      const status = err?.status ?? err?.statusCode ?? null;
+      if (status === 429 || status === 503 || !status) {
+        const delay = 500 * Math.pow(2, attempt); // exponential backoff
+        await new Promise((res) => setTimeout(res, delay));
+        continue;
+      }
+      // non-retryable error
+      throw err;
+    }
   }
+
+  throw lastErr;
 }
 
 function parseFallback(output: string, fileIds: string[]): Record<string, string> {
