@@ -59,4 +59,10 @@
     "@vscode/vsce": "^3.9.2",
     "typescript": "^5.5.4"
   }
+  ,
+  "keywords": ["vscode", "extension", "codebase", "graph", "d3", "llm", "openai"],
+  "homepage": "https://github.com/yukthaprakash/codebase-cartographer#readme",
+  "bugs": {
+    "url": "https://github.com/yukthaprakash/codebase-cartographer/issues"
+  }
 }

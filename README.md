@@ -83,6 +83,22 @@ npm install
 - Build: `npm run compile`
 - Package: `npm run package` (requires `vsce`)
 
+---
+
+## Production considerations
+
+- API keys: prefer storing `cartographer.openaiApiKey` in VS Code settings or use environment variables for CI; never commit secrets. See `.env.example` for local testing.
+- Cost & rate limits: summarization uses OpenAI — large workspaces may incur costs and rate limits. The extension batches requests, retries on transient failures, and caches results in `.cartographer-cache.json`.
+- Privacy: code snippets may be sent to the LLM provider. Avoid running the extension on private or regulated code unless permitted by your organization.
+
+## Publishing checklist
+
+- Set `publisher` in `package.json` to your Marketplace publisher ID.
+- Verify `LICENSE` is present (MIT included).
+- Ensure `.vscodeignore` excludes dev files; run `vsce package` and confirm VSIX contents.
+- Add a demo GIF at `media/demo.gif` for the README.
+
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).
