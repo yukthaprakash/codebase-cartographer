@@ -1,5 +1,7 @@
 # AI Codebase Cartographer
 
+![CI](https://github.com/yukthaprakash/codebase-cartographer/actions/workflows/ci.yml/badge.svg)
+
 A VS Code extension that scans an open workspace, extracts file-level dependencies, summarizes each file with an LLM, and renders an interactive dependency graph in a Webview.
 
 ## Current Status
