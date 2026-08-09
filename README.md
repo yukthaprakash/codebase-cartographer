@@ -2,110 +2,87 @@
 
 ![CI](https://github.com/yukthaprakash/codebase-cartographer/actions/workflows/ci.yml/badge.svg)
 
-A VS Code extension that scans an open workspace, extracts file-level dependencies, summarizes each file with an LLM, and renders an interactive dependency graph in a Webview.
-
-## Current Status
-
-- Command: `Cartographer: Generate Dependency Map`
-- Activation: `onCommand:cartographer.generateMap`
-- Scans `.ts`, `.tsx`, `.js`, and `.jsx` files.
-- Extracts `import`, `export`, dynamic `import()`, and `require()` relationships with `@babel/parser`.
-- Calls OpenAI via `OPENAI_API_KEY` to generate 1-2 sentence summaries per file.
-- Caches summaries in `.cartographer-cache.json` for faster reruns.
-- Renders a D3 force-directed graph in a VS Code Webview.
-- Supports hover preview and click-to-open file navigation.
-
-## Setup
-
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-# AI Codebase Cartographer
-
-One-line: A VS Code extension that scans a codebase, summarizes each file with an LLM, and renders an interactive dependency graph to help engineers quickly understand unfamiliar projects.
-
-Why it matters: Saves onboarding time by surfacing module intent and relationships across a codebase.
+A VS Code extension that scans an open workspace, extracts file-level dependencies, summarizes each file with an LLM, and renders an interactive dependency graph in a Webview — helping engineers understand unfamiliar codebases in minutes instead of hours.
 
 ---
 
-## Quick start (clone & run)
+## Install
 
-1. Clone and install:
+**Option 1 — Download the packaged extension (fastest)**
+1. Go to [Releases](https://github.com/yukthaprakash/codebase-cartographer/releases) and download the latest `.vsix` file.
+2. In VS Code: Extensions panel → `...` menu → **Install from VSIX...** → select the downloaded file.
 
+> No release published yet? Run `npm run package` locally to build `ai-codebase-cartographer-0.0.1.vsix`, or clone and run from source using Quick Start below.
+
+**Option 2 — Run from source**
 ```bash
-git clone <repo-url>
+git clone https://github.com/yukthaprakash/codebase-cartographer.git
 cd codebase-cartographer
 npm install
 ```
 
-2. Set your OpenAI key (required for summaries):
+---
 
+## Quick Start
+
+1. Set your OpenAI key (required for AI summaries — the extension still scans and graphs your workspace without it, just skips summaries):
 ```bash
-export OPENAI_API_KEY="sk-..."
+   export OPENAI_API_KEY="sk-..."
 ```
-
-3. Build and run in VS Code:
-
+2. Build and launch:
 ```bash
-npm run compile
-# In VS Code: Press F5 to open Extension Development Host
-# In the host window: Command Palette → "Cartographer: Generate Dependency Map"
+   npm run compile
 ```
-
-If you don't provide `OPENAI_API_KEY`, the extension will still scan the workspace but will skip LLM summaries.
+3. In VS Code, press `F5` to open the Extension Development Host.
+4. In the new window: `Command Palette` (`Ctrl+Shift+P` / `Cmd+Shift+P`) → **Cartographer: Generate Dependency Map**.
 
 ---
 
 ## Features
 
-- Scans `.ts`, `.tsx`, `.js`, and `.jsx` files and extracts `import`/`require` dependencies.
-- Generates concise 1–2 sentence file summaries via OpenAI.
-- Caches summaries in `.cartographer-cache.json` for fast re-runs.
-- Interactive D3 force-directed graph in a VS Code Webview with zoom/pan, hover previews, and click-to-open file navigation.
+- Scans `.ts`, `.tsx`, `.js`, and `.jsx` files
+- Extracts `import`, `export`, dynamic `import()`, and `require()` relationships using `@babel/parser`
+- Generates concise 1–2 sentence AI summaries per file via OpenAI
+- Caches summaries in `.cartographer-cache.json` for fast re-runs
+- Interactive D3 force-directed graph in a VS Code Webview — zoom, pan, hover-to-preview, click-to-open-file
 
 ---
 
-## How it works (architecture)
+## How It Works (Architecture)
 
-1. Workspace scanning (`src/scanner.ts`) — walks the workspace, parses files with `@babel/parser`, and builds a `{ nodes, edges }` graph.
-2. Summarization (`src/llm.ts`) — batches file contents, calls OpenAI, and stores results in `.cartographer-cache.json`.
-3. Webview (`src/webview.ts` + `media/`) — sends graph+summaries to the frontend; `media/webview.js` renders the D3 graph and posts open-file messages back to the extension host.
-
----
-
-## Demo (insert your GIF/screenshot here)
-
-Replace this line with your demo asset. Example markdown to insert in this spot:
-
-`![Demo GIF](./media/demo.gif)`
-
-Place the GIF at `media/demo.gif` (or update the path above) and commit it.
+1. **Workspace scanning** (`src/scanner.ts`) — walks the workspace, parses files with `@babel/parser`, builds a `{ nodes, edges }` dependency graph.
+2. **Summarization** (`src/llm.ts`) — batches file contents, calls OpenAI, caches results in `.cartographer-cache.json`.
+3. **Webview** (`src/webview.ts` + `media/`) — sends the graph and summaries to the frontend; `media/webview.js` renders the D3 graph and posts open-file messages back to the extension host.
 
 ---
 
-## Tech stack & learnings
+## Demo
+
+![Demo GIF](./media/demo.gif)
+
+*(Record a short GIF of the graph panel rendering after running the command, save it to `media/demo.gif`, and commit it.)*
+
+---
+
+## Tech Stack
 
 - TypeScript, Node.js, VS Code Extension API
 - AST parsing with `@babel/parser` for robust import extraction
-- OpenAI (`openai` SDK) for concise code summarization
-- D3.js for interactive graph visualization inside a VS Code Webview
+- OpenAI SDK for code summarization
+- D3.js for the interactive dependency graph
 
-What I learned: integrating an LLM into a developer tool requires careful batching and caching to control cost and latency; Webviews need careful asset loading and secure message passing.
+**What I learned:** integrating an LLM into a developer tool requires careful batching and caching to control cost and latency; VS Code Webviews need careful asset loading and secure message passing between the extension host and the frontend.
 
 ---
 
-## Dev notes
+## Dev Notes
 
-- Command: `Cartographer: Generate Dependency Map`
-- Activation: `onCommand:cartographer.generateMap`
+- Command ID: `cartographer.generateMap`
+- Command title: `Cartographer: Generate Dependency Map`
+- Activation event: `onCommand:cartographer.generateMap`
 - Build: `npm run compile`
 - Package: `npm run package` (requires `vsce`)
 
-Before publishing: add a `repository` and `license` to `package.json`, set a real `publisher`, and add a `.vscodeignore` to reduce VSIX size.
-
----
-
 ## License
 
-Add a `LICENSE` file (e.g., MIT) before publishing.
+MIT — see [LICENSE](./LICENSE).
