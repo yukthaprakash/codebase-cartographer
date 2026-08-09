@@ -3,7 +3,7 @@
   "displayName": "AI Codebase Cartographer",
   "description": "Scans a workspace, summarizes files with an LLM, and renders an interactive dependency graph in a VS Code Webview.",
   "version": "0.0.1",
-  "publisher": "your-publisher",
+  "publisher": "yukthaprakash",
   "license": "MIT",
   "repository": {
     "type": "git",
