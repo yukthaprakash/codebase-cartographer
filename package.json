@@ -1,0 +1,43 @@
+{
+  "name": "ai-codebase-cartographer",
+  "displayName": "AI Codebase Cartographer",
+  "description": "Scans a workspace, summarizes files with an LLM, and renders an interactive dependency graph in a VS Code Webview.",
+  "version": "0.0.1",
+  "publisher": "your-publisher",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:cartographer.generateMap"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cartographer.generateMap",
+        "title": "Cartographer: Generate Dependency Map",
+        "category": "Cartographer"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.25.0",
+    "d3": "^7.9.0",
+    "openai": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^3.9.2",
+    "typescript": "^5.5.4"
+  }
+}

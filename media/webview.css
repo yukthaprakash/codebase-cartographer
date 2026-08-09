@@ -1,0 +1,35 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--vscode-font-family);
+  color: var(--vscode-editor-foreground);
+  background-color: var(--vscode-editor-background);
+}
+
+#graph-container {
+  width: 100vw;
+  height: 100vh;
+}
+
+#preview-panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 320px;
+  max-height: 200px;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(30, 30, 30, 0.92);
+  color: white;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  z-index: 10;
+}
+
+#preview-panel.hidden {
+  display: none;
+}
+
+#preview-header {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
