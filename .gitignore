@@ -2,3 +2,4 @@ node_modules/
 out/
 .cartographer-cache.json
 .vscode/
+.cartographer-cache.json
